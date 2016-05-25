@@ -51,7 +51,7 @@ for tDraw = 1:tH
     texIm((objSpac1+objSpac2+objSpac3)-sqSide/2-tH-1+tDraw,bottomD-round(tDraw*sqSide/tH/2):bottomD+round(tDraw*sqSide/tH/2)) = 255;
 end
 
-movTemplate = fliplr(circshift(texIm,140)')';
+movTemplate = fliplr(circshift(texIm,70)')';
 
 %% Generate the movie
 % Load a real fly's trajectory
@@ -80,15 +80,17 @@ fclose(fileID);
 
 % specify temporal parameters of the movie
 movieRate = mean(diff(t))*40; % sec
-movieResX = 240; % Px
+movieResX = 360; % Px
 movieResY = 120; % Px
 
 movie = zeros(movieResX,movieResY,round(length(t)/40));
 
 for i=1:floor(length(t)/40)
     frameNow = circshift(movTemplate,round(OffsetRot(i*40)));
-    movie(:,:,i) = frameNow(1:movieResX,:);
+    movie(:,:,i) = frameNow;
 end
+movie(1:60,:,:) = 0;
+movie(301:360,:,:) = 0;
 
 %% Show the fake movie
 figure;

@@ -15,14 +15,14 @@
 %% First generate the RFs
 
 % The size of the visual scene
-xPx = 240; % pixels
+xPx = 360; % pixels
 yPx = 120; % pixels
 px2deg = 1; % pixel to degree conversion
 
 % The center of the RF overlap and their spread
-xRFcent = 60; % degrees
+xRFcent = 65; % degrees
 yRFcent = 0; % degrees
-xRFspread = 25; % degrees
+xRFspread = 30; % degrees
 yRFspread = 15; % degrees
 
 % The center and size of the contralateral inhibitory region
@@ -175,8 +175,9 @@ end
 %% Now convolute the RFs with the movie
 
 % Calculate the mean RF responses and the ROI with the max response
-meanResp = zeros(xPx,yPx,size(movie,3)-size(allRFs,4)+1);
+% meanResp = zeros(xPx,yPx,size(movie,3)-size(allRFs,4)+1);
 RFMax = zeros(size(movie,3)-size(allRFs,4)+1,1);
+RFMaxVals = zeros(size(allRFs,1),size(movie,3)-size(allRFs,4)+1);
 
 for i = size(allRFs,4):length(RFMax)
     i
@@ -186,8 +187,9 @@ for i = size(allRFs,4):length(RFMax)
             tempRFcomp(RF,:,:) = squeeze(tempRFcomp(RF,:,:)) + squeeze(allRFs(RF,:,:,tIt)).*squeeze(movie(:,:,i+tIt-1));
         end
     end
-    meanResp(:,:,i) = squeeze(mean(tempRFcomp,1));
+%     meanResp(:,:,i) = squeeze(mean(tempRFcomp,1));
     tempRFcompMean = squeeze(mean(mean(tempRFcomp,2),3));
+    RFmaxVals(:,i) = tempRFcompMean;
     if max(tempRFcompMean) <= 0
         RFMax(i) = 0;
     else
@@ -201,7 +203,7 @@ ExAng = zeros(length(RFMax),1);
 for i=1:length(RFMax)
     if RFMax(i) > 0
         exRFNow = 0.5*(squeeze(allRFs(RFMax(i),:,:,1))+abs(squeeze(allRFs(RFMax(i),:,:,1))));
-        ExAng(i) = mean(find(mean(exRFNow,2)))-120;
+        ExAng(i) = mean(find(mean(exRFNow,2)))-180;
     end
 end
 
@@ -222,26 +224,47 @@ ylim([-pi pi]);
 rectangle('Position', [t(1) -pi t(end)-t(1) pi/3]);
 rectangle('Position', [t(1) 2*pi/3 t(end)-t(1) pi/3]);
 
+RFcentVals = zeros(size(allRFs,1),1);
+for i=1:length(RFcentVals)
+    exRFNow = 0.5*(squeeze(allRFs(i,:,:,1))+abs(squeeze(allRFs(i,:,:,1))));
+    RFcentVals(i) = mean(find(mean(exRFNow,2)))-180;
+end
+
+angs = [-180:1:180];
+allMaxs = zeros(length(angs),length(RFmaxVals));
+
+for i=1:length(RFcentVals)
+    allMaxs(round(RFcentVals(i))+180,:) = squeeze(RFmaxVals(i,:));
+end
+
+figure;
+imagesc(t(1:40:length(ExAng)*40),pi/180*angs,flipud(allMaxs));
+caxis([0 max(max(allMaxs))]);
+xlim([25 190]);
+ylim([-pi pi]);
+set(gca,'FontSize',16);
+xlabel('Time (sec)');
+ylabel('Obj. Orientation (rad)');
+
 %% Plot a few representative RFs and the sum of all RFs
 figure;
 
 for i=1:6
     subplot(4,3,i)
     RF2plt = round(rand*numRFs*2);
-    imagesc([1:240]-120,[1:120]-60,squeeze(allRFs(RF2plt,:,:,1))')
+    imagesc([1:360]-180,[1:120]-60,squeeze(allRFs(RF2plt,:,:,1))')
     axis equal;
-    xlim([-120 120]);
+    xlim([-180 180]);
     ylim([-60 60]);
     xlabel('Visual field (deg)');
 end
 
 subplot(4,3,7:12)
-imagesc([1:240]-120,[1:120]-60,squeeze(mean(allRFs(:,:,:,1),1))')
+imagesc([1:360]-180,[1:120]-60,squeeze(mean(allRFs(:,:,:,1),1))')
 axis equal;
-xlim([-120 120]);
+xlim([-180 180]);
 ylim([-60 60]);
 xlabel('Visual field (deg)');
-colorbar;
 
 %% Show the movie template
 figure;
